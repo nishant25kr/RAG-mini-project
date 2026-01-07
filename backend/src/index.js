@@ -4,6 +4,7 @@ import axios from "axios";
 import * as pdfjs from "pdfjs-dist/legacy/build/pdf.mjs";
 import { generate_Embedding } from "./ai.js";
 import { connectDB } from "./db.js";
+import pdfSchema from "./models/pdf.model.js";
 
 dotenv.config();
 
@@ -53,15 +54,32 @@ app.get("/", async (req, res) => {
 
 app.get("/embed-data", async (req, res) => {
     try {
-        
+
         const url = "https://investors.mongodb.com/node/12236/pdf";
 
         const text = await extractPdfText(url);
 
         const response = await generate_Embedding(text);
 
+        // console.log(response.embeddings[0].values);
+
+        const NewPdf = new pdfSchema(
+            {
+                name: "New pdf",
+                embedding: response.embeddings[0].values
+            }
+        )
+
+        if (!NewPdf) {
+            return res
+                .status(500)
+                .json({
+                    message: "error in uploading the embeeding"
+                })
+        }
+
         return res.status(200).json({
-            embedding: response.embeddings,
+            messsage: "Pdf uploaded successfullt"
         });
 
     } catch (err) {
